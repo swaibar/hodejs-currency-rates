@@ -1,7 +1,8 @@
 /* 
 Write a one-page app
 	language of your choice (node.js)
-	uses https://exchangeratesapi.io/ (Foreign Exchange Rates API)
+    uses https://exchangeratesapi.io/ (Foreign Exchange Rates API)
+    (added to github)
 
 allows the user to:
     Check current rate of every given currency against any other currency of the user’s choice
