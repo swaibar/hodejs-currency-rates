@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barry Swaisland - Angular / Node - Currency App</title>
+    <title>Barry Swaisland - Angular / Node - One Page Currency App</title>
 
     <!--  bootstrap -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -35,7 +35,7 @@
         <div class="row text-center">
             <div class="container">
                 <div class="jumbotron">
-                    <h1>Rates</h1>
+                    <h1>Barry Swaisland - Angular / Node - One Page Currency App</h1>
                     <p class="text-center">
                         Base Currency: {{baseCurrencyCode}} ({{baseCurrencySymbol}})
                         <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}" style="width:100px;height:50px"></div>
@@ -44,58 +44,71 @@
             </div>
         </div>
 
-        
+        <div style="margin-top:20px"></div>
+
         <!-- If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today? -->
         <div class="container">
+            <h2>Retrospective Purchasing Outcome:</h2>
             <form>
                 <div class="form-group row text-center">
-                    <label for="amount_pucahsed" class="col-lg-2 col-form-label">If</label>
-                    <div class="col-lg-2">
-                        <input type="number" id="amount_pucahsed" ng-model="amountPurchased" value="{{amountPurchased}}">
-                        <select id="purchaseCurrency" ng-model="purchaseCurrency"
+                    <div class="col-lg-3">
+                        <select id="purchaseCurrency" 
+                            ng-change="updateTodaysValue()"
+                            ng-model="purchaseCurrency"
                             ng-options="currencyCode for currencyCode in currencyCodes"></select>
+                        <input type="number" 
+                            id="amount_pucahsed" 
+                            ng-change="updateTodaysValue()"
+                            ng-model="amountPurchased" 
+                            value="{{amountPurchased}}" 
+                            style="width:100px;">
                     </div>
-                    <label for="purchase_year" class="col-lg-2 col-form-label">purchased in</label>
-                    <div class="col-lg-2">
-                        <select id="purchase_month" ng-model="purchaseMonth"
+                    <label for="purchase_year" class="col-lg-2 col-form-label" >puchcased in</label>
+                    <div class="col-lg-3">
+                        <select id="purchase_month" 
+                                ng-change="updateTodaysValue()"
+                                ng-model="purchaseMonth"
                                 ng-options="purchaseMonth for purchaseMonth in purchaseMonths"></select>
-                    </div>
-                    <div class="col-lg-2">
-                    <select id="purchase_year" ng-model="purchaseYear"
+                        <select id="purchase_year" 
+                            ng-change="updateTodaysValue()"
+                            ng-model="purchaseYear"
                             ng-options="purchaseYear for purchaseYear in purchaseYears"></select>
                     </div>
-                    <label for="todays_value" class="col-lg-2 col-form-label">today it would be worth</label>
+                    <label for="todays_value" class="col-lg-2 col-form-label">is worth today</label>
                     <div class="col-lg-2">
-                        <input type="number" id="todays_value" ng-model="todaysValue" value="{{todaysValue}}" readonly>
+                        <input type="number" id="todays_value" ng-model="todaysValue" value="{{todaysValue}}" readonly style="width:100px;">
                     </div>
                 </div>
             </form>
         </div>
 
+        <div style="margin-top:20px"></div>
+
         <!-- Visualise the historical change in rate between any two dates of the user’s choice, against any currency of the user’s choice -->
         <div class="container">
+            <h2>Visualise Historical Change:</h2>
             <form>
                 <div class="form-group row text-center">
-                    <label for="start_date" class="col-sm-2 col-form-label">Start Date</label>
-                    <div class="col-sm-4">
+                    <label for="start_date" class="col-lg-2 col-form-label">Start Date</label>
+                    <div class="col-lg-2">
                         <input type="date" id="start_date" ng-model="startDate" value="{{startDate}}">
                     </div>
-                    <label for="end_date" class="col-sm-2 col-form-label">End Date</label>
-                    <div class="col-sm-4">
+                    <label for="end_date" class="col-lg-2 col-form-label">End Date</label>
+                    <div class="col-lg-2">
                         <input type="date" id="end_date" ng-model="endDate" value="{{endDate}}">
                     </div>
-                </div>
-                <div class="form-group row text-center">
-                    <label for="currencies" class="col-sm-2 col-form-label">Currencies</label>
-                    <div class="col-sm-2">
+                    <label for="currencies" class="col-lg-2 col-form-label">Currencies</label>
+                    <div class="col-lg-2">
                         <select multiple id="currencies" ng-model="selectedCurrencies"
                             ng-options="currencyCode for currencyCode in currencyCodes"></select>
                     </div>
-                    <div class="col-sm-4">
+                </div>
+                <div class="form-group row text-center">
+                    <div class="col-lg-6">
                         <br>
                         <button type="button" class="btn btn-primary" ng-click="viewGraph()">View History Graph</button>
                     </div>
-                    <div class="col-sm-4">
+                    <div class="col-lg-6">
                         <br>
                         <button data-toggle="collapse" data-target="#ratesChartDiv" type="button" class="btn btn-secondary" href="#ratesChartDiv">Hide / Toggle</button>
                     </div>
@@ -117,9 +130,10 @@
                         <th>Country</th>
                         <th>Code</th>
                         <th>Symbol</th>
-                        <th>1 {{baseCurrencySymbol}} =
+                        <th>
                             <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}"
-                                style="width:50px;height:25px"></div>
+                            style="width:50px;height:25px"></div>
+                            1{{baseCurrencySymbol}} =
                         </th>
                         <th>Use As Base Currency</th>
                     </tr>
@@ -152,6 +166,16 @@
     <script>
         var app = angular.module('myApp', []);
         app.controller('currencyController', function ($scope, $http) {
+
+            $scope.getFirstDaysOfMonthBetween = function(startDate, endDate) {
+                var arr = new Array();
+                var dt = new Date(startDate);
+                while (dt <= endDate) {
+                    arr.push(new Date(dt));
+                    dt.setMonth(dt.getMonth() + 1);
+                }
+                return arr;
+            };
 
             //USed to format the numbers and keep the decimal places in line (hard to read without)
             $scope.padRate = (number) => {
@@ -202,17 +226,36 @@
             //then get the rate again for the latest date and calculate todays value
             $scope.updateTodaysValue = () => {
                 var purchaseDate =  new Date($scope.purchaseYear + '-'+("00" + $scope.purchaseMonth).slice(-2)   +'-01');
+                console.log('updateTodaysValue'+purchaseDate);
+
+                //TODO use $scope.getFirstDaysOfMonthBetween foreach of these dates keep buying each month
+                //hmmm actaully probably better to do one request to get all the data and then pick the rates ourselves (instead of x http calls)
+                //show total spend as well as the final output
+
                 $http.get($scope.getExchangeURL(purchaseDate,purchaseDate,$scope.purchaseCurrency)).then((response) => {
-                    let purchaseRate = (Object.values(Object.values(response.data.rates)[0]))[0];
-                    let purchasedAmount = $scope.amountPurchased * purchaseRate;
-                    var latest =  new Date();
-                    latest.setDate(latest.getDate() - 1);
-                    $http.get($scope.getExchangeURL(latest,latest,$scope.purchaseCurrency)).then((response) => {
-                        let todayRate = (Object.values(Object.values(response.data.rates)[0]))[0];
-                        $scope.todaysValue = Math.round(purchasedAmount / todayRate,2);
-                    });
+
+                    if (Object.values(response.data.rates).length == 'undefined') {
+                         alert('boo');
+                    }
+                    else {
+                        if (Object.values(response.data.rates)[0] == 'undefined') {
+                            alert('boo boo');
+                        }
+                        else {
+                            let purchaseRate = (Object.values(Object.values(response.data.rates)[0]))[0];
+                            let purchasedAmount = $scope.amountPurchased * purchaseRate;
+                            var latest =  new Date();
+                            latest.setDate(latest.getDate() - 1);
+                            $http.get($scope.getExchangeURL(latest,latest,$scope.purchaseCurrency)).then((response) => {
+                                let todayRate = (Object.values(Object.values(response.data.rates)[0]))[0];
+                                $scope.todaysValue = Math.round(purchasedAmount / todayRate,2);
+                            });
+                        }
+                    }
                 });
             }
+
+            
             
             //default values for the purchase projection
             $scope.purchaseMonths = $scope.range(1,12);
