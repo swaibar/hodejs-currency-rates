@@ -31,6 +31,48 @@
     <!--  angular app -->
     <div ng-app="myApp" ng-controller="currencyController">
 
+        <!-- make it clear our current base currency -->
+        <div class="row text-center">
+            <div class="container">
+                <div class="jumbotron">
+                    <h1>Rates</h1>
+                    <p class="text-center">
+                        Base Currency: {{baseCurrencyCode}} ({{baseCurrencySymbol}})
+                        <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}" style="width:100px;height:50px"></div>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today? -->
+        <div class="container">
+            <form>
+                <div class="form-group row text-center">
+                    <label for="amount_pucahsed" class="col-lg-2 col-form-label">If</label>
+                    <div class="col-lg-2">
+                        <input type="number" id="amount_pucahsed" ng-model="amountPurchased" value="{{amountPurchased}}">
+                        <select id="purchaseCurrency" ng-model="purchaseCurrency"
+                            ng-options="currencyCode for currencyCode in currencyCodes"></select>
+                    </div>
+                    <label for="purchase_year" class="col-lg-2 col-form-label">purchased in</label>
+                    <div class="col-lg-2">
+                        <select id="purchase_month" ng-model="purchaseMonth"
+                                ng-options="purchaseMonth for purchaseMonth in purchaseMonths"></select>
+                    </div>
+                    <div class="col-lg-2">
+                    <select id="purchase_year" ng-model="purchaseYear"
+                            ng-options="purchaseYear for purchaseYear in purchaseYears"></select>
+                    </div>
+                    <label for="todays_value" class="col-lg-2 col-form-label">today it would be worth</label>
+                    <div class="col-lg-2">
+                        <input type="number" id="todays_value" ng-model="todaysValue" value="{{todaysValue}}" readonly>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Visualise the historical change in rate between any two dates of the user’s choice, against any currency of the user’s choice -->
         <div class="container">
             <form>
                 <div class="form-group row text-center">
@@ -59,31 +101,19 @@
                     </div>
                 </div>
             </form>
-
         </div>
 
         <div class="row collapse"  id="ratesChartDiv">
             <canvas id="ratesChart"></canvas>
         </div>
 
-        <div class="row text-center">
-            <div class="container">
-                <div class="jumbotron">
-                    <h1>Rates</h1>
-                    <p class="text-center">
-                        Base Currency: {{baseCurrencyCode}} ({{baseCurrencySymbol}})
-                        <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}" style="width:100px;height:50px"></div>
-                    </p>
-                </div>
-            </div>
-        </div>
+        <!-- Check current rate of every given currency against any other currency of the user’s choice -->
         <div class="row text-center">
             <div class="container">
                 <p><i>Updated: {{date}}</i></p>
                 <table class="table">
                     <thead>
                     <tr>
-
                         <th>Country</th>
                         <th>Code</th>
                         <th>Symbol</th>
@@ -132,9 +162,21 @@
             $scope.getKeyByValue = (object, value) => {
                 return Object.keys(object).find(key => object[key] === value);
             }
-            
+
+            //util to build array of years
+            $scope.range = (start, end) => Array.from(Array(end + 1).keys()).slice(start);
+
+            //util to get a currency symbol
             $scope.getCurrencySymbol = (currencyCode) => {
                 return Number().toLocaleString(undefined, { style: "currency", currency: currencyCode }).replace(/0/g, '').replace(/\./g, '');
+            }
+
+            //util to get the exchangeratesapi historic API url with get variables for start, end and the currencies required
+            $scope.getExchangeURL = (start,end,currencies) => {
+                return "https://api.exchangeratesapi.io/history?base=" + $scope.baseCurrencyCode
+                    + "&start_at=" + start.toJSON().slice(0, 10)
+                    + "&end_at=" +end.toJSON().slice(0, 10)
+                    + "&symbols=" + currencies;
             }
 
             //TODO $http.get("http://country.io/currency.json").then(function(response) {});
@@ -145,26 +187,54 @@
             $scope.baseCurrencyCode = 'GBP';
             $scope.baseCountryCode = 'GB';
 
+            //default values of the history graph form
             $scope.startDate = new Date('2018-01-01');
             $scope.endDate = new Date('2018-09-01');
             $scope.selectedCurrencies = ['ILS', 'JPY'];
 
+            //default values of the graph date fields
+            $('#startDate').min = new Date('2000-01-01');
+            $('#startDate').max = new Date().toISOString().split("T")[0];
+            $('#endDate').min = new Date('2000-01-01');
+            $('#endDate').max = new Date().toISOString().split("T")[0];
+
+            //get the purchase cost after getting the rate at teh purchase date
+            //then get the rate again for the latest date and calculate todays value
+            $scope.updateTodaysValue = () => {
+                var purchaseDate =  new Date($scope.purchaseYear + '-'+("00" + $scope.purchaseMonth).slice(-2)   +'-01');
+                $http.get($scope.getExchangeURL(purchaseDate,purchaseDate,$scope.purchaseCurrency)).then((response) => {
+                    let purchaseRate = (Object.values(Object.values(response.data.rates)[0]))[0];
+                    let purchasedAmount = $scope.amountPurchased * purchaseRate;
+                    var latest =  new Date();
+                    latest.setDate(latest.getDate() - 1);
+                    $http.get($scope.getExchangeURL(latest,latest,$scope.purchaseCurrency)).then((response) => {
+                        let todayRate = (Object.values(Object.values(response.data.rates)[0]))[0];
+                        $scope.todaysValue = Math.round(purchasedAmount / todayRate,2);
+                    });
+                });
+            }
+            
+            //default values for the purchase projection
+            $scope.purchaseMonths = $scope.range(1,12);
+            $scope.purchaseYears = $scope.range(2000,2020);
+            $scope.amountPurchased = 200;
+            $scope.purchaseMonth = 9;
+            $scope.purchaseYear = 2008;
+            $scope.purchaseCurrency = 'CAD';
+            $scope.updateTodaysValue();
+
+            //view a graph of historical curriency rates based on user values from the form
             $scope.viewGraph = () => {
-                $scope.url = "https://api.exchangeratesapi.io/history?base=" + $scope.baseCurrencyCode
-                    + "&start_at=" + $scope.startDate.toJSON().slice(0, 10)
-                    + "&end_at=" + $scope.endDate.toJSON().slice(0, 10)
-                    + "&symbols=" + $scope.selectedCurrencies.join(",");
+                $http.get($scope.getExchangeURL($scope.startDate,$scope.endDate,$scope.selectedCurrencies.join(","))).then((response) => {
 
-                document.getElementById('ratesChartDiv').classList.add('show');
-
-                $http.get($scope.url).then(function (response) {
-
+                    //data comes back unsorted, so sort it by date
                     var sortedData = [];
                     for (let [date, rates] of Object.entries(response.data.rates)) {
                         sortedData.push([date, response.data.rates[date]]);
                     }
                     sortedData.sort();
 
+                    //build the labels and dataset arrays from the sorted data
                     var labels = [];
                     var datasets = [];
                     for (let data of sortedData) {
@@ -184,6 +254,8 @@
                             }
                         }
                     }
+
+                    //create the line chart
                     var ctx = document.getElementById('ratesChart').getContext('2d');
                     var myChart = new Chart(ctx, {
                         type: 'line',
@@ -192,13 +264,16 @@
                             datasets
                         }
                     });
+
+                    //ensure it can be seen
+                    $('#ratesChartDiv').addClass('show');
                 });
             }
 
             //Build our list of currency codes from those the ECB lists in its feed
             $scope.currencyCodes = [];
             $scope.updateBaseCurrency = (baseCurrency) => {
-                $http.get("https://api.exchangeratesapi.io/latest?base=" + baseCurrency).then(function (response) {
+                $http.get("https://api.exchangeratesapi.io/latest?base=" + baseCurrency).then((response) => {
                     $scope.baseCurrencyCode = response.data.base;
                     $scope.baseCountryCode = $scope.getKeyByValue($scope.countryToCurrencyCode, response.data.base);
                     $scope.baseCurrencySymbol = $scope.getCurrencySymbol(response.data.base);

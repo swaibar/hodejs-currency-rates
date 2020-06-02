@@ -18,12 +18,14 @@ Progress:
  * Templating and users were not needed so I returned to focus on the main requirements and started to use angular in a single test html to develop this
  * Despite focus not on presentation I like to use an application that looks appealing so I added basic bootstrap, flags, currency symbol and basic table styling
 
+ Note:
+ * The API only goes back to 2000 (start of ECB/EUR?) and cannot get rates in the future update form, maybe using fixer.io better and AFAIK ECB updates the rates daily, this might not be good enough
 
 TODO:
-* improve graph: series colours; title; better axis;
-* If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today?
-* refactor and comment
-* User authentication (sign up, manage profile, login, logout, etc) to store their base currency
+ * improve graph: series colours; title; better axis;
+ * If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today?
+ * refactor and comment
+ * User authentication (sign up, manage profile, login, logout, etc) to store their base currency
 */
 
 var http = require('http');
