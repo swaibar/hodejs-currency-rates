@@ -1,14 +1,29 @@
 /* 
 Write a one-page app
-	language of your choice (node.js)
+	language of your choice (JavaScript: node.js and angular and without NPM or PHP)
     uses https://exchangeratesapi.io/ (Foreign Exchange Rates API)
-    (added to github)
+    (added to github https://github.com/swaibar/nodejs-currency-rates/)
 
 allows the user to:
     Check current rate of every given currency against any other currency of the user’s choice
     Visualise the historical change in rate between any two dates of the user’s choice, against any currency of the user’s choice
     Calculate retrospective purchasing outcomes, for example:
         If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today?
+
+Progress:
+ * Initally this node.js code was comitted to provide a module free handler for our application
+ * Started with a file reader to store the users prefernce and then realised this would need authentication
+ * After this commit I started to look at users and authentication, then as this is "needed" I moved on to look at templating
+ * While looking at templating I decided to use angular and keep this as pure javascript as possible and as I've already made it clear I can use the package manager... maybe I can complete without?
+ * Templating and users were not needed so I returned to focus on the main requirements and started to use angular in a single test html to develop this
+ * Despite focus not on presentation I like to use an application that looks appealing so I added basic bootstrap, flags, currency symbol and basic table styling
+
+
+TODO:
+* improve graph: series colours; title; better axis;
+* If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today?
+* refactor and comment
+* User authentication (sign up, manage profile, login, logout, etc) to store their base currency
 */
 
 var http = require('http');

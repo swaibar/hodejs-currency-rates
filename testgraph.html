@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barry Swaisland - Angular / Node - Currency App</title>
+
+    <!--  bootstrap -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <!-- css flags on a CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.3.0/css/flag-icon.min.css">
+
+    <!-- chart library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"
+        integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+
+    <!-- angular -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+
+</head>
+
+<body>
+
+    <!--  angular app -->
+    <div ng-app="myApp" ng-controller="currencyController">
+
+        <div class="container">
+            <form>
+                <div class="form-group row text-center">
+                    <label for="start_date" class="col-sm-2 col-form-label">Start Date</label>
+                    <div class="col-sm-4">
+                        <input type="date" id="start_date" ng-model="startDate" value="{{startDate}}">
+                    </div>
+                    <label for="end_date" class="col-sm-2 col-form-label">End Date</label>
+                    <div class="col-sm-4">
+                        <input type="date" id="end_date" ng-model="endDate" value="{{endDate}}">
+                    </div>
+                </div>
+                <div class="form-group row text-center">
+                    <label for="currencies" class="col-sm-2 col-form-label">Currencies</label>
+                    <div class="col-sm-2">
+                        <select multiple id="currencies" ng-model="selectedCurrencies"
+                            ng-options="currencyCode for currencyCode in currencyCodes"></select>
+                    </div>
+                    <div class="col-sm-4">
+                        <br>
+                        <button type="button" class="btn btn-primary" ng-click="viewGraph()">View History Graph</button>
+                    </div>
+                    <div class="col-sm-4">
+                        <br>
+                        <button data-toggle="collapse" data-target="#ratesChartDiv" type="button" class="btn btn-secondary" href="#ratesChartDiv">Hide / Toggle</button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+
+        <div class="row collapse"  id="ratesChartDiv">
+            <canvas id="ratesChart"></canvas>
+        </div>
+
+        <div class="row text-center">
+            <div class="container">
+                <div class="jumbotron">
+                    <h1>Rates</h1>
+                    <p class="text-center">
+                        Base Currency: {{baseCurrencyCode}} ({{baseCurrencySymbol}})
+                        <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}" style="width:100px;height:50px"></div>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="container">
+                <p><i>Updated: {{date}}</i></p>
+                <table class="table">
+                    <thead>
+                    <tr>
+
+                        <th>Country</th>
+                        <th>Code</th>
+                        <th>Symbol</th>
+                        <th>1 {{baseCurrencySymbol}} =
+                            <div class="flag-icon flag-icon-{{baseCountryCode | lowercase}}"
+                                style="width:50px;height:25px"></div>
+                        </th>
+                        <th>Use As Base Currency</th>
+                    </tr>
+                </thead>
+                    <tr ng-repeat="rate in rates">
+
+                        <td>
+                            <div class="flag-icon flag-icon-{{rate.countryCode | lowercase}}"
+                                style="width:50px;height:25px"></div>
+                        </td>
+                        <td>{{rate.currencyCode}}</td>
+                        <td>{{rate.currencySymbol}}</td>
+                        <td>
+                            <pre>{{padRate(rate.currecnyRate)}}</pre>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-secondary"
+                                    ng-click="updateBaseCurrency(rate.currencyCode)">Use</button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+    <!--  angular app code -->
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('currencyController', function ($scope, $http) {
+
+            //USed to format the numbers and keep the decimal places in line (hard to read without)
+            $scope.padRate = (number) => {
+                return " ".repeat(5 - Math.floor(number).toString().length) + number.toFixed(5);
+            }
+
+            //util to look up an objects key by its value
+            $scope.getKeyByValue = (object, value) => {
+                return Object.keys(object).find(key => object[key] === value);
+            }
+            
+            $scope.getCurrencySymbol = (currencyCode) => {
+                return Number().toLocaleString(undefined, { style: "currency", currency: currencyCode }).replace(/0/g, '').replace(/\./g, '');
+            }
+
+            //TODO $http.get("http://country.io/currency.json").then(function(response) {});
+            //I was going to use a source for this, but after this worked I then found that USD, EUR and GBP didn't work - in this case they appeared multiple times and showed the first country using that currency... so I hardcoded it after the quick data change...
+            $scope.countryToCurrencyCode = { "BD": "BDT", "BF": "XOF", "BG": "BGN", "BA": "BAM", "BB": "BBD", "WF": "XPF", "EU": "BMD", "BN": "BND", "BO": "BOB", "BH": "BHD", "BI": "BIF", "BJ": "XOF", "BT": "BTN", "JM": "JMD", "BV": "NOK", "BW": "BWP", "WS": "WST",  "BR": "BRL", "BS": "BSD", "GB": "BYR", "BZ": "BZD", "RU": "RUB", "RW": "RWF", "RS": "RSD",  "TM": "TMT", "TJ": "TJS", "RO": "RON", "TK": "NZD", "GW": "XOF", "GT": "GTQ", "GQ": "XAF", "JP": "JPY", "GY": "GYD", "GE": "GEL", "GD": "XCD", "GB": "GBP", "GA": "XAF",  "GN": "GNF", "GM": "GMD", "GL": "DKK", "GI": "GIP", "GH": "GHS", "OM": "OMR", "TN": "TND", "JO": "JOD", "HR": "HRK", "HT": "HTG", "HU": "HUF", "HK": "HKD", "HN": "HNL", "HM": "AUD", "VE": "VEF", "PS": "ILS",  "SJ": "NOK", "PY": "PYG", "IQ": "IQD", "PA": "PAB", "PF": "XPF", "PG": "PGK", "PE": "PEN", "PK": "PKR", "PH": "PHP", "PN": "NZD", "PL": "PLN", "ZM": "ZMK", "EH": "MAD", "EE": "EGP", "ZA": "ZAR",  "VN": "VND", "SB": "SBD", "ET": "ETB", "SO": "SOS", "ZW": "ZWL", "SA": "SAR", "ER": "ERN", "MD": "MDL", "MG": "MGA", "MA": "MAD", "UZ": "UZS", "MM": "MMK", "ML": "XOF", "MO": "MOP", "MN": "MNT", "MK": "MKD", "MU": "MUR", "MW": "MWK", "MV": "MVR",  "MS": "XCD", "MR": "MRO", "UG": "UGX", "TZ": "TZS", "MY": "MYR", "MX": "MXN", "IL": "ILS", "SH": "SHP", "FJ": "FJD", "FK": "FKP",  "FO": "DKK", "NI": "NIO", "EU": "EUR", "NO": "NOK", "NA": "NAD", "VU": "VUV", "NC": "XPF", "NE": "XOF", "NF": "AUD", "NG": "NGN", "NZ": "NZD", "NP": "NPR", "NR": "AUD", "NU": "NZD", "CK": "NZD", "CI": "XOF", "CH": "CHF", "CO": "COP", "CN": "CNY", "CM": "XAF", "CL": "CLP", "CC": "AUD", "CA": "CAD", "CG": "XAF", "CF": "XAF", "CD": "CDF", "CZ": "CZK", "CX": "AUD", "CR": "CRC", "CW": "ANG", "CV": "CVE", "CU": "CUP", "SZ": "SZL", "SY": "SYP", "SX": "ANG", "KG": "KGS", "KE": "KES", "SS": "SSP", "SR": "SRD", "KI": "AUD", "KH": "KHR", "KN": "XCD", "KM": "KMF", "ST": "STD", "KR": "KRW", "KP": "KPW", "KW": "KWD", "SN": "XOF", "SL": "SLL", "SC": "SCR", "KZ": "KZT", "KY": "KYD", "SG": "SGD", "SE": "SEK", "SD": "SDG", "DO": "DOP", "DM": "XCD", "DJ": "DJF", "DK": "DKK",  "YE": "YER", "DZ": "DZD", "UY": "UYU",  "LB": "LBP", "LC": "XCD", "LA": "LAK", "TV": "AUD", "TW": "TWD", "TT": "TTD", "TR": "TRY", "LK": "LKR", "LI": "CHF", "TO": "TOP", "LT": "LTL", "LR": "LRD", "LS": "LSL", "TH": "THB", "TG": "XOF", "TD": "XAF",  "LY": "LYD", "VC": "XCD", "AE": "AED", "AG": "XCD", "AF": "AFN", "AI": "XCD", "US": "USD", "IS": "ISK", "IR": "IRR", "AM": "AMD", "AL": "ALL", "AO": "AOA", "AQ": "", "AR": "ARS", "AU": "AUD", "AW": "AWG", "IN": "INR", "AZ": "AZN", "ID": "IDR", "UA": "UAH", "QA": "QAR", "MZ": "MZN" };
+
+            //default to use GBP
+            $scope.baseCurrencyCode = 'GBP';
+            $scope.baseCountryCode = 'GB';
+
+            $scope.startDate = new Date('2018-01-01');
+            $scope.endDate = new Date('2018-09-01');
+            $scope.selectedCurrencies = ['ILS', 'JPY'];
+
+            $scope.viewGraph = () => {
+                $scope.url = "https://api.exchangeratesapi.io/history?base=" + $scope.baseCurrencyCode
+                    + "&start_at=" + $scope.startDate.toJSON().slice(0, 10)
+                    + "&end_at=" + $scope.endDate.toJSON().slice(0, 10)
+                    + "&symbols=" + $scope.selectedCurrencies.join(",");
+
+                document.getElementById('ratesChartDiv').classList.add('show');
+
+                $http.get($scope.url).then(function (response) {
+
+                    var sortedData = [];
+                    for (let [date, rates] of Object.entries(response.data.rates)) {
+                        sortedData.push([date, response.data.rates[date]]);
+                    }
+                    sortedData.sort();
+
+                    var labels = [];
+                    var datasets = [];
+                    for (let data of sortedData) {
+                        var date = data[0];
+                        var rates = data[1];
+                        labels.push(date);
+                        for (let [currencyCode, rate] of Object.entries(rates)) {
+                            let datasetObj = datasets.find(obj => obj.label == currencyCode);
+                            if (typeof (datasetObj) != 'undefined') {
+                                datasetObj.data.push(rate);
+                            }
+                            else {
+                                datasets.push({
+                                    'label': currencyCode,
+                                    'data': [rate],
+                                });
+                            }
+                        }
+                    }
+                    var ctx = document.getElementById('ratesChart').getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets
+                        }
+                    });
+                });
+            }
+
+            //Build our list of currency codes from those the ECB lists in its feed
+            $scope.currencyCodes = [];
+            $scope.updateBaseCurrency = (baseCurrency) => {
+                $http.get("https://api.exchangeratesapi.io/latest?base=" + baseCurrency).then(function (response) {
+                    $scope.baseCurrencyCode = response.data.base;
+                    $scope.baseCountryCode = $scope.getKeyByValue($scope.countryToCurrencyCode, response.data.base);
+                    $scope.baseCurrencySymbol = $scope.getCurrencySymbol(response.data.base);
+                    $scope.date = new Date(response.data.date).toDateString();
+
+                    $scope.rates = [];
+                    $scope.currencyCodes = [];
+                    for (let [key, value] of Object.entries(response.data.rates)) {
+                        var coutryCode = $scope.getKeyByValue($scope.countryToCurrencyCode, key);
+                        var currencySymbol = $scope.getCurrencySymbol(key);
+                        $scope.currencyCodes.push(key);
+                        $scope.rates.push({
+                            'countryCode': coutryCode,
+                            'currencySymbol': currencySymbol,
+                            'currencyCode': key,
+                            'currecnyRate': value,
+                        });
+                    }
+                });
+            }
+
+            $scope.updateBaseCurrency($scope.baseCurrencyCode);
+        });
+    </script>
+
+</body>
+
+</html>
