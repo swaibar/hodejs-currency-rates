@@ -33,6 +33,8 @@ var server = http.createServer((incomingMessage,serverResponse) => {
             'payload'           : helpers.parseJsonToObject(buffer)
         };
 
+        console.log(data);
+
         //implment very simple routing
         var chosenHandler = typeof(router[data.trimmedPath]) != 'undefined' ? router[data.trimmedPath] : handlers.notFound;
         chosenHandler(data,(statusCode,payload) => {

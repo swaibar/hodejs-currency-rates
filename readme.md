@@ -1,12 +1,12 @@
-#currency one page app
+# currency one page app
 
-##features
+## features
 
 * Check current rate of every given currency against any other currency of the user’s choice
 * Visualise the historical change in rate between any two dates of the user’s choice, against any currency of the user’s choice
 * Calculate retrospective purchasing outcomes, for example: If I had purchased £200 worth of CAD in September 2008, how much CAD would I have today?
 
-##usage
+## usage
 
     git clone
     node index.js
@@ -15,15 +15,15 @@ visit [localhost:3000/currencies](http://localhost:3000/currencies) to use the a
 
 Alternatively `currency-one-page-app.html` could be deployed standalone.
 
-##development
+## development
 
-###technology
+### technology
 
 * Node.js, angular and Bootstrap. 
 * https://exchangeratesapi.io/ (Foreign Exchange Rates API, as requested)
 * CDN usage to create the simplest possible solution
 
-###progress
+### progress
 
  * Initially this Node.js code was committed to provide a module free handler for our application
  * Started with a file reader to store the users preference and then realised this would need authentication
@@ -40,9 +40,10 @@ Alternatively `currency-one-page-app.html` could be deployed standalone.
 
 At the point of about 6 hours I'm happy this is a developed application and although there are many small items that could be improved I want to move on to something new and so am looking at expaning this to include users and authentication via a RESTful API and a GUI.  After this automated test is next.
 
-* first API call to create a user tested via PostMan
+* first POST API call to create a user tested via PostMan
+* second GET API call to get user data
 
-###todo
+### todo
  * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns
  * automated testing to ensure the current calculation is correct 
  * error handling of failed api calls
