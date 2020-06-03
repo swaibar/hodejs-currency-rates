@@ -7,6 +7,8 @@ var http = require('http');
 var url  = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config');
+var handlers = require('./lib/handlers');
+var helpers = require('./lib/helpers');
 
 //Create a server that reads all the incoming data of the request
 //implment very simple routing
@@ -28,45 +30,36 @@ var server = http.createServer((incomingMessage,serverResponse) => {
             'queryStringObject' : parsedUrl.query,
             'method'            : incomingMessage.method.toLowerCase(),
             'headers'           : incomingMessage.headers,
-            'payload'           : buffer
+            'payload'           : helpers.parseJsonToObject(buffer)
         };
 
         //implment very simple routing
-        var chosenHandler = typeof(router[data.trimmedPath]) != 'undefined' ? router[data.trimmedPath] : routes.notFound;
+        var chosenHandler = typeof(router[data.trimmedPath]) != 'undefined' ? router[data.trimmedPath] : handlers.notFound;
         chosenHandler(data,(statusCode,payload) => {
 
             //return response
+            contentType = typeof(payload) == 'string'   ? 'html'     : 'json';
             statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
-            payload    = typeof(payload) == 'string'    ? payload    : '';
 
-            serverResponse.writeHead(statusCode,{'Content-Type': 'text/html'});
-            serverResponse.write(payload);
-            serverResponse.end();
+            var payloadString = '';
+            if(contentType == 'json'){
+                serverResponse.writeHead(statusCode,{'Content-Type': 'application/json'});
+                payloadString = JSON.stringify(payload);
+            }
+            if(contentType == 'html'){
+                serverResponse.writeHead(statusCode,{'Content-Type': 'text/html'});
+                payloadString = payload;
+            }
+
+            serverResponse.end(payloadString);
         });
     });
 });
 
-//Simple router
-//one route for our one page app, a 404 and and array register
-var routes = {};
-routes.currencies = (data,callback) => {
-    var fs = require('fs');
-    fs.readFile("currency-one-page-app.html", function(err,data)
-    {
-        if(err) {
-            console.log(err)
-        }
-        else {
-            callback(200, data.toString());
-        }
-    });
-}
-routes.notFound = (data,callback) => {
-    callback(404,'Not Found');
-}
 
 var router = {
-   'currencies' : routes.currencies
+   'users'      : handlers.users,
+   'currencies' : handlers.currencies
 }
 
 //Start the server listening on the post from config

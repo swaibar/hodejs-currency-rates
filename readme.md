@@ -38,6 +38,10 @@ Alternatively `currency-one-page-app.html` could be deployed standalone.
  * many smaller refactors and comments - added this readme.md instead of a comment in index.js
  * fixed many cases of retrospective purchasing failures... instead of requesting the rate on the first of the month, request for the whole month and use the first returned
 
+At the point of about 6 hours I'm happy this is a developed application and although there are many small items that could be improved I want to move on to something new and so am looking at expaning this to include users and authentication via a RESTful API and a GUI.  After this automated test is next.
+
+* first API call to create a user tested via PostMan
+
 ###todo
  * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns
  * automated testing to ensure the current calculation is correct 
