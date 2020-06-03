@@ -60,8 +60,9 @@ var server = http.createServer((incomingMessage,serverResponse) => {
 
 
 var router = {
-   'users'      : handlers.users,
-   'currencies' : handlers.currencies
+    'users'      : handlers.users,
+    'tokens'     : handlers.tokens,
+    'currencies' : handlers.currencies
 }
 
 //Start the server listening on the post from config
