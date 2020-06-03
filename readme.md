@@ -43,6 +43,7 @@ At the point of about 6 hours I'm happy this is a developed application and alth
 * first POST API call to create a user tested via PostMan
 * second GET API call to get user data
 * completed user serverice, now move on to tokens for authentication
+* lastly add user ability to sign up and log in, then when logged in the system can also persist their base currency selection and maybe more...
 
 ### todo
  * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns
@@ -56,4 +57,3 @@ At the point of about 6 hours I'm happy this is a developed application and alth
  * add another graph for the above retrospective purchasing outcome
  * how much would GBP 226 have purchased in CAD if purchased in September 2008
  * caching of results (as pre api provider request) also improve performance ability to work as PWA
- * User authentication (sign up, manage profile, login, logout, etc) to store their base currency - requires routing and auth
