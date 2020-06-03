@@ -42,6 +42,7 @@ At the point of about 6 hours I'm happy this is a developed application and alth
 
 * first POST API call to create a user tested via PostMan
 * second GET API call to get user data
+* completed user serverice, now move on to tokens for authentication
 
 ### todo
  * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns
