@@ -62,11 +62,11 @@ routes.currencies = (data,callback) => {
     });
 }
 routes.notFound = (data,callback) => {
-    callback(404);
+    callback(404,'Not Found');
 }
 
 var router = {
-    'currencies' : routes.currencies
+   'currencies' : routes.currencies
 }
 
 //Start the server listening on the post from config

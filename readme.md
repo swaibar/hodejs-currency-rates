@@ -36,9 +36,12 @@ Alternatively `currency-one-page-app.html` could be deployed standalone.
  * Noticed limitations of the API, would suggest using a different one that client request (no rates before 2000 start of ECB/EUR?; cannot get rates certain rate dates; AFAIK ECB updates the rates daily)
  * linked `currency-one-page-app.html` to the simple Node.js server/router
  * many smaller refactors and comments - added this readme.md instead of a comment in index.js
+ * fixed many cases of retrospective purchasing failures... instead of requesting the rate on the first of the month, request for the whole month and use the first returned
 
 ###todo
-
+ * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns
+ * automated testing to ensure the current calculation is correct 
+ * error handling of failed api calls
  * improve graph: series colours; title; better axis;
  * add currency and country names, not just codes
  * add a select for base currency at the top of the page
@@ -46,4 +49,5 @@ Alternatively `currency-one-page-app.html` could be deployed standalone.
  * add another retrospective purchasing outcome, if I brought that amount every month since that date
  * add another graph for the above retrospective purchasing outcome
  * how much would GBP 226 have purchased in CAD if purchased in September 2008
+ * caching of results (as pre api provider request) also improve performance ability to work as PWA
  * User authentication (sign up, manage profile, login, logout, etc) to store their base currency - requires routing and auth
