@@ -8,7 +8,8 @@
 
 ## usage
 
-    git clone
+    git clone --branch dev https://github.com/swaibar/nodejs-currency-rates.git
+    mkdir .data .data/users .data/tokens
     node index.js
 
 visit [localhost:3000/currencies](http://localhost:3000/currencies) to use the application
@@ -43,7 +44,8 @@ At the point of about 6 hours I'm happy this is a developed application and alth
 * first POST API call to create a user tested via PostMan
 * second GET API call to get user data
 * completed user serverice, now move on to tokens for authentication
-* lastly add user ability to sign up and log in, then when logged in the system can also persist their base currency selection and maybe more...
+* created a basic header and footer along with templating... with account/create now creating users (not fully working, but can be seen in network tab)
+* ability to sign up and log in, then when logged in the system can also persist their base currency selection and maybe more...
 
 ### todo
  * html5 dates are not friendly (or respecting min/max) so replace with month/year dropdowns

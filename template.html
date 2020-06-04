@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+
+    <!--  bootstrap -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <!-- css flags on a CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.3.0/css/flag-icon.min.css">
+
+    <!-- chart library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"
+        integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+
+    <!-- angular -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+
+    <!-- custom logic to submit forms without normal httppost -->
+    <!-- TODO this should be served from our application, but instead of enhancing the routing I'll hardcode for now -->
+    <script>
+        var app = {};
+
+        // Config
+        app.config = {
+        'sessionToken' : false
+        };
+
+        // AJAX Client (for RESTful API)
+        app.client = {}
+
+        // Interface for making API calls
+        app.client.request = function(headers,path,method,queryStringObject,payload,callback){
+
+        // Set defaults
+        headers = typeof(headers) == 'object' && headers !== null ? headers : {};
+        path = typeof(path) == 'string' ? path : '/';
+        method = typeof(method) == 'string' && ['POST','GET','PUT','DELETE'].indexOf(method.toUpperCase()) > -1 ? method.toUpperCase() : 'GET';
+        queryStringObject = typeof(queryStringObject) == 'object' && queryStringObject !== null ? queryStringObject : {};
+        payload = typeof(payload) == 'object' && payload !== null ? payload : {};
+        callback = typeof(callback) == 'function' ? callback : false;
+
+        // For each query string parameter sent, add it to the path
+        var requestUrl = path+'?';
+        var counter = 0;
+        for(var queryKey in queryStringObject){
+            if(queryStringObject.hasOwnProperty(queryKey)){
+            counter++;
+            // If at least one query string parameter has already been added, preprend new ones with an ampersand
+            if(counter > 1){
+                requestUrl+='&';
+            }
+            // Add the key and value
+            requestUrl+=queryKey+'='+queryStringObject[queryKey];
+            }
+        }
+
+        // Form the http request as a JSON type
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, requestUrl, true);
+        xhr.setRequestHeader("Content-type", "application/json");
+
+        // For each header sent, add it to the request
+        for(var headerKey in headers){
+            if(headers.hasOwnProperty(headerKey)){
+            xhr.setRequestHeader(headerKey, headers[headerKey]);
+            }
+        }
+
+        // If there is a current session token set, add that as a header
+        if(app.config.sessionToken){
+            xhr.setRequestHeader("token", app.config.sessionToken.id);
+        }
+
+        // When the request comes back, handle the response
+        xhr.onreadystatechange = function() {
+            if(xhr.readyState == XMLHttpRequest.DONE) {
+                var statusCode = xhr.status;
+                var responseReturned = xhr.responseText;
+
+                // Callback if requested
+                if(callback){
+                try{
+                    var parsedResponse = JSON.parse(responseReturned);
+                    callback(statusCode,parsedResponse);
+                } catch(e){
+                    callback(statusCode,false);
+                }
+
+                }
+            }
+        }
+
+        // Send the payload as JSON
+        var payloadString = JSON.stringify(payload);
+        xhr.send(payloadString);
+
+        };
+
+        // Bind the forms
+        app.bindForms = function(){
+        document.querySelector("form").addEventListener("submit", function(e){
+
+            // Stop it from submitting
+            e.preventDefault();
+            var formId = this.id;
+            var path = this.action;
+            var method = this.method.toUpperCase();
+
+            // Hide the error message (if it's currently shown due to a previous error)
+            document.querySelector("#"+formId+" .formError").style.display = 'hidden';
+
+            // Turn the inputs into a payload
+            var payload = {};
+            var elements = this.elements;
+            for(var i = 0; i < elements.length; i++){
+            if(elements[i].type !== 'submit'){
+                var valueOfElement = elements[i].type == 'checkbox' ? elements[i].checked : elements[i].value;
+                payload[elements[i].name] = valueOfElement;
+            }
+            }
+
+            // Call the API
+            app.client.request(undefined,path,method,undefined,payload,function(statusCode,responsePayload){
+            // Display an error on the form if needed
+            if(statusCode !== 200){
+
+                // Try to get the error from the api, or set a default error message
+                var error = typeof(responsePayload.Error) == 'string' ? responsePayload.Error : 'An error has occured, please try again';
+
+                // Set the formError field with the error text
+                document.querySelector("#"+formId+" .formError").innerHTML = error;
+
+                // Show (unhide) the form error field on the form
+                document.querySelector("#"+formId+" .formError").style.display = 'block';
+
+            } else {
+                // If successful, send to form response processor
+                app.formResponseProcessor(formId,payload,responsePayload);
+            }
+
+            });
+        });
+        };
+
+        // Form response processor
+        app.formResponseProcessor = function(formId,requestPayload,responsePayload){
+        var functionToCall = false;
+        if(formId == 'accountCreate'){
+            // @TODO Do something here now that the account has been created successfully
+        }
+        };
+
+        // Init (bootstrapping)
+        app.init = function(){
+        // Bind all form submissions
+        app.bindForms();
+        };
+
+        // Call the init processes after the window loads
+        window.onload = function(){
+        app.init();
+        };
+
+    </script>
+</head>
+
+<body>
+  
+    <div class="header">
+        <div class="row" >
+            <div class="col-lg-6"> <a href="/">Currency App</a></div>
+
+            <div class="col-lg-3 loggedOut"><a href="/account/create">Signup</a></div>
+            <div class="col-lg-3 loggedOut"><a href="/session/create">Login</a></div>
+            <div class="col-lg-3 loggedIn"><a href="/account/edit">Account</a></div>
+            <div class="col-lg-3 loggedIn"><a href="#">Logout</a></div>
+        </div>
+    </div>
+    <div class="container" >
+       {body}
+    </div>
+ 
+
+    <footer stlye="text-align: center;">&copy; <span id="year"></span> Not Really | No Rights Reserved</footer>
+    <script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>
+</body> 
+
+</html>

@@ -33,8 +33,6 @@ var server = http.createServer((incomingMessage,serverResponse) => {
             'payload'           : helpers.parseJsonToObject(buffer)
         };
 
-        console.log(data);
-
         //implment very simple routing
         var chosenHandler = typeof(router[data.trimmedPath]) != 'undefined' ? router[data.trimmedPath] : handlers.notFound;
         chosenHandler(data,(statusCode,payload) => {
@@ -60,9 +58,10 @@ var server = http.createServer((incomingMessage,serverResponse) => {
 
 
 var router = {
-    'users'      : handlers.users,
-    'tokens'     : handlers.tokens,
-    'currencies' : handlers.currencies
+    ''               : handlers.currencies,
+    'account/create' : handlers.accountCreate,
+    'api/users'          : handlers.users,
+    'api/tokens'         : handlers.tokens
 }
 
 //Start the server listening on the post from config
