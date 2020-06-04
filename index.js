@@ -60,6 +60,7 @@ var server = http.createServer((incomingMessage,serverResponse) => {
 var router = {
     ''               : handlers.currencies,
     'account/create' : handlers.accountCreate,
+    'session/create' : handlers.sessionCreate,
     'api/users'          : handlers.users,
     'api/tokens'         : handlers.tokens
 }
