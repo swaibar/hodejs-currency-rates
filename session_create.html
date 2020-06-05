@@ -1,19 +1,24 @@
-<h1>Login</h1>
+<!--  angular app -->
+<div ng-app="sessionApp" ng-controller="sessionController">
 
-  <form id="sessionCreate" action="/api/tokens" method="POST">
-    <div class="form-group">
-    <div class="formError"></div>
-    <div class="inputWrapper">
-      <div class="inputLabel">Email</div>
-      <input type="text" name="email" />
-    </div>
-    <div class="inputWrapper">
-      <div class="inputLabel">Password</div>
-      <input type="password" name="password" />
-    </div>
-    <div class="inputWrapper ctaWrapper">
-      <button type="submit" class="btn btn-primary">Login</button>
-    </div>
+    <h1>Login</h1>
+
+    <form ng-submit="createSession">
+        <div class="form-group">
+
+            <div ng-show="formError" class="text-danger">{{formErrorMessage}}</div>
+
+            <div>
+                <label for="email">Email:</label>
+                <input type="text" id="email" class="form-control" ng-model="email"/>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" class="form-control" ng-model="password"  />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+        </div>
+    </form>
 </div>
-  </form>
-
