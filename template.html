@@ -24,21 +24,48 @@
     <!-- angular -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
 
-    <!-- custom logic to submit forms without normal httppost -->
-    <!-- TODO this should be served from our application, but instead of enhancing the routing I'll hardcode for now -->
-    <script>
+</head>
 
-        var sessionApp = angular.module('sessionApp', []);
-        sessionApp.controller('sessionController', function ($scope, $http) {
+<body ng-app="myApp" ng-controller="myController">
+
+        <div >
+            <div class="header"  >
+                <div class="row" >
+                    <div class="col-lg-6"> <a href="/">Currency App</a></div>
+
+                    <div class="col-lg-3" ng-if="loggedIn == false"><a href="/account/create">Signup</a></div>
+                    <div class="col-lg-3" ng-if="loggedIn == false"><a href="/session/create">Login</a></div>
+
+                    <div class="col-lg-3"  ><a href="#" (click)="logOut()" >Test</a></div>
+
+                    <div class="col-lg-3" ng-if="loggedIn"><a href="/account/edit">Account</a></div>
+                    <div class="col-lg-3" ng-if="loggedIn" ><a href="#" (click)="logOut()" >Logout</a></div>
+                </div>
+            </div>
+        </div>
+
+    <div class="container" >
+       {body}
+    </div>
+ 
+
+    <script>
+        var myApp = angular.module('myApp', []);
+        myApp.controller('myController', ($scope, $http) => {
+
+            //Session Handling
 
             $scope.sessionToken = localStorage.getItem('token');
-            $scope.loggedIn = false;
-            
-            $scope.formError = false;
-            $scope.formErrorMessage = '';
+            $scope.loggedIn = typeof($scope.sessionToken.id) == 'string';
 
+            console.log('init myController');
+            console.log($scope.sessionToken);
 
             $scope.logOut = () => {
+                $scope.sessionToken = localStorage.getItem('token');
+
+                console.log('logOut');
+
                 var tokenId = typeof($scope.sessionToken.id) == 'string' ? $scope.sessionToken.id : false;
 
                 let headers = new HttpHeaders();
@@ -49,37 +76,14 @@
                     .then(() => {
                         $scope.sessionToken = false;
                         $scope.loggedIn = false;
-                        window.location = '/';
+                        //$window.location.href =  '/';
                     });
                    
             };
 
-            $scope.createAccount = () => {
-                let headers = new HttpHeaders();
-                headers = headers.set('Content-Type', 'application/json; charset=utf-8');
-                let options = new RequestOptions({
-                    headers: headers
-                });
-                var body = {
-                    'email' : $scope.email,
-                    'password' : requestPayload.password
-                };
-                $http.post('/api/tokens', body, options)
-                    .subscribe(
-                        data => {
-                            localStorage.setItem('token',data);
-                            window.location = '/';
-                        },
-                        error => {
-                            $scope.formError = true;
-                            $scope.formErrorMessage = error;
-                        }
-                    );
-            }
-
             $scope.renewToken = (callback) => {
                 var currentToken = typeof($scope.sessionToken) == 'object' ? $scope.sessionToken : false;
-                if(currentToken){
+                if (currentToken) {
                     let headers = new HttpHeaders();
                     headers = headers.set('Content-Type', 'application/json; charset=utf-8');
                     let options = new RequestOptions({headers: headers});
@@ -108,7 +112,8 @@
                                 callback(true);
                             }
                         );
-                } else {
+                } 
+                else {
                     localStorage.setItem('token',false);
                     callback(true);
                 }
@@ -126,26 +131,212 @@
 
             $scope.tokenRenewalLoop();
 
+
+
+
+
+            //Form processing
+
+
+            $scope.formError = false;
+            $scope.formErrorMessage = '';
+            
+            console.log('init createAccountAppController');
+
+
+            $scope.createAccount = () => {
+
+                console.log('createAccount');
+
+                let headers = new HttpHeaders();
+                headers = headers.set('Content-Type', 'application/json; charset=utf-8');
+                let options = new RequestOptions({
+                    headers: headers
+                });
+                var body = {
+                    'email' : $scope.email,
+                    'password' : $scope.password
+                };
+                $http.post('/api/tokens', body, options)
+                    .subscribe(
+                        data => {
+                            localStorage.setItem('token',data);
+                            console.log(data);
+                            //$window.location.href =  '/';
+                        },
+                        error => {
+                            console.log('error');
+                            $scope.formError = true;
+                            $scope.formErrorMessage = error;
+                        }
+                    );
+            }
+
+
+
+
+
+            //Currency Functions
+
+            //presentation util to format the numbers and keep the decimal places in line (hard to read without)
+            $scope.padRate = (number) => {
+                return " ".repeat(5 - Math.floor(number).toString().length) + number.toFixed(5);
+            }
+
+            //util to look up an objects key by its value
+            $scope.getKeyByValue = (object, value) => {
+                return Object.keys(object).find(key => object[key] === value);
+            }
+
+            //util to build array of numbers in range (like PHP function range())
+            $scope.range = (start, end) => Array.from(Array(end + 1).keys()).slice(start);
+
+            //util to get a currency symbol
+            $scope.getCurrencySymbol = (currencyCode) => {
+                return Number().toLocaleString(undefined, { style: "currency", currency: currencyCode }).replace(/0/g, '').replace(/\./g, '');
+            }
+
+            //util to get the historic exchangeratesapi API url with get variables for start, end and the currencies required
+            $scope.getExchangeHistoryURL = (start,end,currencies) => {
+                return "https://api.exchangeratesapi.io/history?base=" + $scope.baseCurrencyCode
+                    + "&start_at=" + start.toJSON().slice(0, 10)
+                    + "&end_at=" +end.toJSON().slice(0, 10)
+                    + "&symbols=" + currencies;
+            }
+
+            //util to get the latest exchangeratesapi API url with optional get variable for currencies required
+            $scope.getExchangeLatestURL = (currencies) => {
+                let url =  "https://api.exchangeratesapi.io/latest?base=" + $scope.baseCurrencyCode;
+                if (typeof(currencies) == 'string') {
+                    url += "&symbols=" + currencies;
+                }
+                return url;
+            }
+
+
+            //TODO $http.get("http://country.io/currency.json").then(function(response) {});
+            //I was going to use a source for this, but after this worked I then found that USD, EUR and GBP didn't work - in this case they appeared multiple times and showed the first country using that currency... so I hardcoded it after the quick data change...
+            $scope.countryToCurrencyCode = { "BD": "BDT", "BF": "XOF", "BG": "BGN", "BA": "BAM", "BB": "BBD", "WF": "XPF", "EU": "BMD", "BN": "BND", "BO": "BOB", "BH": "BHD", "BI": "BIF", "BJ": "XOF", "BT": "BTN", "JM": "JMD", "BV": "NOK", "BW": "BWP", "WS": "WST",  "BR": "BRL", "BS": "BSD", "GB": "BYR", "BZ": "BZD", "RU": "RUB", "RW": "RWF", "RS": "RSD",  "TM": "TMT", "TJ": "TJS", "RO": "RON", "TK": "NZD", "GW": "XOF", "GT": "GTQ", "GQ": "XAF", "JP": "JPY", "GY": "GYD", "GE": "GEL", "GD": "XCD", "GB": "GBP", "GA": "XAF",  "GN": "GNF", "GM": "GMD", "GL": "DKK", "GI": "GIP", "GH": "GHS", "OM": "OMR", "TN": "TND", "JO": "JOD", "HR": "HRK", "HT": "HTG", "HU": "HUF", "HK": "HKD", "HN": "HNL", "HM": "AUD", "VE": "VEF", "PS": "ILS",  "SJ": "NOK", "PY": "PYG", "IQ": "IQD", "PA": "PAB", "PF": "XPF", "PG": "PGK", "PE": "PEN", "PK": "PKR", "PH": "PHP", "PN": "NZD", "PL": "PLN", "ZM": "ZMK", "EH": "MAD", "EE": "EGP", "ZA": "ZAR",  "VN": "VND", "SB": "SBD", "ET": "ETB", "SO": "SOS", "ZW": "ZWL", "SA": "SAR", "ER": "ERN", "MD": "MDL", "MG": "MGA", "MA": "MAD", "UZ": "UZS", "MM": "MMK", "ML": "XOF", "MO": "MOP", "MN": "MNT", "MK": "MKD", "MU": "MUR", "MW": "MWK", "MV": "MVR",  "MS": "XCD", "MR": "MRO", "UG": "UGX", "TZ": "TZS", "MY": "MYR", "MX": "MXN", "IL": "ILS", "SH": "SHP", "FJ": "FJD", "FK": "FKP",  "FO": "DKK", "NI": "NIO", "EU": "EUR", "NO": "NOK", "NA": "NAD", "VU": "VUV", "NC": "XPF", "NE": "XOF", "NF": "AUD", "NG": "NGN", "NZ": "NZD", "NP": "NPR", "NR": "AUD", "NU": "NZD", "CK": "NZD", "CI": "XOF", "CH": "CHF", "CO": "COP", "CN": "CNY", "CM": "XAF", "CL": "CLP", "CC": "AUD", "CA": "CAD", "CG": "XAF", "CF": "XAF", "CD": "CDF", "CZ": "CZK", "CX": "AUD", "CR": "CRC", "CW": "ANG", "CV": "CVE", "CU": "CUP", "SZ": "SZL", "SY": "SYP", "SX": "ANG", "KG": "KGS", "KE": "KES", "SS": "SSP", "SR": "SRD", "KI": "AUD", "KH": "KHR", "KN": "XCD", "KM": "KMF", "ST": "STD", "KR": "KRW", "KP": "KPW", "KW": "KWD", "SN": "XOF", "SL": "SLL", "SC": "SCR", "KZ": "KZT", "KY": "KYD", "SG": "SGD", "SE": "SEK", "SD": "SDG", "DO": "DOP", "DM": "XCD", "DJ": "DJF", "DK": "DKK",  "YE": "YER", "DZ": "DZD", "UY": "UYU",  "LB": "LBP", "LC": "XCD", "LA": "LAK", "TV": "AUD", "TW": "TWD", "TT": "TTD", "TR": "TRY", "LK": "LKR", "LI": "CHF", "TO": "TOP", "LT": "LTL", "LR": "LRD", "LS": "LSL", "TH": "THB", "TG": "XOF", "TD": "XAF",  "LY": "LYD", "VC": "XCD", "AE": "AED", "AG": "XCD", "AF": "AFN", "AI": "XCD", "US": "USD", "IS": "ISK", "IR": "IRR", "AM": "AMD", "AL": "ALL", "AO": "AOA", "AQ": "", "AR": "ARS", "AU": "AUD", "AW": "AWG", "IN": "INR", "AZ": "AZN", "ID": "IDR", "UA": "UAH", "QA": "QAR", "MZ": "MZN" };
+
+            //default to use GBP
+            $scope.baseCurrencyCode = 'GBP';
+            $scope.baseCountryCode = 'GB';
+
+            //default values of the history graph form
+            $scope.startDate = new Date('2018-01-01');
+            $scope.endDate = new Date('2018-09-01');
+            $scope.selectedCurrencies = ['ILS', 'JPY'];
+
+            //default values of the graph date fields
+            $('#start_date').min = new Date('2000-01-01');
+            $('#start_date').max = new Date();
+            $('#end_date').min = new Date('2000-01-01');
+            $('#end_date').max = new Date();
+
+            //get the purchase cost after getting the rate at teh purchase date
+            //then get the rate again for the latest date and calculate todays value
+            $scope.updateTodaysValue = () => {
+                var purchaseYYYYMM = $scope.purchaseYear + '-' + ("00" + $scope.purchaseMonth).slice(-2) + '-';
+                var purchaseDateStartMonth =  new Date(purchaseYYYYMM + '01');
+                var purchaseDateEndMonth =  new Date(purchaseYYYYMM   + '28');//use 28 so works for any month
+
+                $http.get($scope.getExchangeHistoryURL(purchaseDateStartMonth,purchaseDateEndMonth,$scope.purchaseCurrency)).then((response) => {
+                    let purchaseRate = (Object.values(Object.values(response.data.rates)[0]))[0];
+                    let purchasedAmount = $scope.amountPurchased * purchaseRate;
+                    $http.get($scope.getExchangeLatestURL($scope.purchaseCurrency)).then((response) => {
+                        let todayRate = Object.values(response.data.rates)[0];
+                        $scope.todaysValue = Math.round(purchasedAmount / todayRate,2);
+                    });
+                });
+            }
+
+            //default values for the purchase projection
+            $scope.purchaseMonths = $scope.range(1,12);
+            $scope.purchaseYears = $scope.range(2000,2020);
+            $scope.amountPurchased = 200;
+            $scope.purchaseMonth = 9;
+            $scope.purchaseYear = 2008;
+            $scope.purchaseCurrency = 'CAD';
+            $scope.updateTodaysValue();
+
+            //view a graph of historical curriency rates based on user values from the form
+            $scope.viewGraph = () => {
+                $http.get($scope.getExchangeHistoryURL($scope.startDate,$scope.endDate,$scope.selectedCurrencies.join(","))).then((response) => {
+
+                    //data comes back unsorted, so sort it by date
+                    var sortedData = [];
+                    for (let [date, rates] of Object.entries(response.data.rates)) {
+                        sortedData.push([date, response.data.rates[date]]);
+                    }
+                    sortedData.sort();
+
+                    //build the labels and dataset arrays from the sorted data
+                    var labels = [];
+                    var datasets = [];
+                    for (let data of sortedData) {
+                        var date = data[0];
+                        var rates = data[1];
+                        labels.push(date);
+                        for (let [currencyCode, rate] of Object.entries(rates)) {
+                            let datasetObj = datasets.find(obj => obj.label == currencyCode);
+                            if (typeof (datasetObj) != 'undefined') {
+                                datasetObj.data.push(rate);
+                            }
+                            else {
+                                datasets.push({
+                                    'label': currencyCode,
+                                    'data': [rate],
+                                });
+                            }
+                        }
+                    }
+
+                    //create the line chart
+                    var ctx = document.getElementById('ratesChart').getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets
+                        }
+                    });
+
+                    //ensure it can be seen
+                    $('#ratesChartDiv').addClass('show');
+                });
+            }
+
+            //Build our list of currency codes from those the ECB lists in its feed
+            $scope.currencyCodes = [];
+            $scope.updateBaseCurrency = (baseCurrency) => {
+                $scope.baseCurrencyCode = baseCurrency;
+                $http.get($scope.getExchangeLatestURL()).then((response) => {
+                    $scope.baseCountryCode = $scope.getKeyByValue($scope.countryToCurrencyCode, response.data.base);
+                    $scope.baseCurrencySymbol = $scope.getCurrencySymbol(response.data.base);
+                    $scope.date = new Date(response.data.date).toDateString();
+
+                    $scope.rates = [];
+                    $scope.currencyCodes = [];
+                    for (let [currencyCode, currecnyRate] of Object.entries(response.data.rates)) {
+                        var coutryCode = $scope.getKeyByValue($scope.countryToCurrencyCode, currencyCode);
+                        var currencySymbol = $scope.getCurrencySymbol(currencyCode);
+                        $scope.currencyCodes.push(currencyCode);
+                        $scope.rates.push({
+                            'countryCode'   : coutryCode,
+                            'currencySymbol': currencySymbol,
+                            'currencyCode'  : currencyCode,
+                            'currecnyRate'  : currecnyRate,
+                        });
+                    }
+                });
+            }
+
+            $scope.updateBaseCurrency($scope.baseCurrencyCode);
+
         });
+
     </script>
-</head>
 
-<body>
-  
-    <div class="header">
-        <div class="row" >
-            <div class="col-lg-6"> <a href="/">Currency App</a></div>
-
-            <div class="col-lg-3" ng-if="loggedIn == false"><a href="/account/create">Signup</a></div>
-            <div class="col-lg-3" ng-if="loggedIn == false"><a href="/session/create">Login</a></div>
-            <div class="col-lg-3" ng-if="loggedIn"><a href="/account/edit">Account</a></div>
-            <div class="col-lg-3" ng-if="loggedIn" ><a href="#"  (click)="logOut()" >Logout</a></div>
-        </div>
-    </div>
-    <div class="container" >
-       {body}
-    </div>
- 
 
     <footer stlye="text-align: center;">&copy; <span id="year"></span> Not Really | No Rights Reserved</footer>
     <script>document.getElementById("year").innerHTML = new Date().getFullYear();</script>

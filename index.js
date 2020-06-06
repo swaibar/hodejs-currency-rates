@@ -2,6 +2,7 @@
 A simple node server setup to allow for simple routing cases
 which at present is used to serve a single page on http://localhost:3000/currencies
 */
+'use strict';
 
 var http = require('http');
 var url  = require('url');
@@ -38,10 +39,10 @@ var server = http.createServer((incomingMessage,serverResponse) => {
         chosenHandler(data,(statusCode,payload) => {
 
             //return response
-            contentType = typeof(payload) == 'string'   ? 'html'     : 'json';
+            let contentType = typeof(payload) == 'string'   ? 'html'     : 'json';
             statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
 
-            var payloadString = '';
+            let payloadString = '';
             if(contentType == 'json'){
                 serverResponse.writeHead(statusCode,{'Content-Type': 'application/json'});
                 payloadString = JSON.stringify(payload);
